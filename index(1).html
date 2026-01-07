@@ -1,0 +1,1230 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Bookkeeping</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #e8f5e9 100%);
+            min-height: 100vh;
+            padding: 20px
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto
+        }
+
+        h1 {
+            text-align: center;
+            color: #00796b;
+            margin-bottom: 30px;
+            font-size: 2em
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 150, 136, 0.1);
+            border: 1px solid #e0f2f1
+        }
+
+        .card h2 {
+            color: #00796b;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #80cbc4;
+            padding-bottom: 10px
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 150px
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #00695c;
+            font-weight: 500;
+            font-size: 14px
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #b2dfdb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: #fafffe
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #26a69a;
+            background: white
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin: 2px
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #26a69a 0%, #00897b 100%);
+            color: white
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(38, 166, 154, 0.4)
+        }
+
+        .btn-secondary {
+            background: #e0f2f1;
+            color: #00796b;
+            border: 1px solid #80cbc4
+        }
+
+        .btn-secondary:hover {
+            background: #b2dfdb
+        }
+
+        .btn-danger {
+            background: #ffcdd2;
+            color: #c62828;
+            padding: 6px 12px;
+            font-size: 12px
+        }
+
+        .btn-danger:hover {
+            background: #ef9a9a
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 id="title"></h1>
+        <div class="card">
+            <h2 id="addTitle"></h2>
+            <div class="form-row">
+                <div class="form-group"><label id="labelCat"></label><select id="category"
+                        onchange="onCategoryChange()"></select></div>
+                <div class="form-group"><label id="labelSubCat"></label><select id="subCategory">
+                        <option value="">--</option>
+                    </select></div>
+                <div class="form-group"><label id="labelAmt"></label><input type="number" id="amount" placeholder="0.00"
+                        step="0.01" min="0"></div>
+                <div class="form-group"><label id="labelDate"></label><input type="date" id="date"></div>
+                <div class="form-group"><label id="labelNote"></label><input type="text" id="note"></div>
+            </div>
+            <button class="btn btn-primary" id="btnAdd" onclick="addRecord()"></button>
+            <button class="btn btn-secondary" id="btnManageCat" onclick="showCategoryModal()"></button>
+        </div>
+        <div class="card">
+            <h2 id="statsTitle"></h2>
+            <div class="tabs" id="periodTabs"></div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="statLabel1"></h3>
+                    <div class="value" id="totalAmount"></div>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statLabel2"></h3>
+                    <div class="value" id="totalCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statLabel3"></h3>
+                    <div class="value" id="avgAmount"></div>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statLabel4"></h3>
+                    <div class="value" id="maxAmount"></div>
+                </div>
+            </div>
+            <div class="chart-tabs" id="chartTabs"></div>
+            <div class="charts-area" id="chartsArea"></div>
+        </div>
+        <div class="card">
+            <h2 id="recordsTitle"></h2>
+            <div class="filter-row">
+                <select id="filterCategory" onchange="renderRecords()"></select>
+                <input type="month" id="filterMonth" onchange="renderRecords()">
+                <button class="btn btn-primary" id="btnExport" onclick="exportExcel()"></button>
+                <button class="btn btn-secondary" id="btnImport"
+                    onclick="document.getElementById('importFile').click()"></button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            </div>
+            <div id="recordsTable"></div>
+        </div>
+    </div>
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle"></h3><span class="close-btn" onclick="closeCategoryModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="cat-section">
+                    <h4 id="addCatTitle"></h4>
+                    <div class="form-row">
+                        <div class="form-group"><label id="labelNewCat"></label><input type="text" id="newCatName"
+                                maxlength="10"></div>
+                        <div class="form-group"><label id="labelIcon"></label>
+                            <div class="icon-selector" id="iconSelector"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-small" onclick="addCategory()">+</button>
+                </div>
+                <div class="cat-section">
+                    <h4 id="addSubTitle"></h4>
+                    <div class="form-row">
+                        <div class="form-group"><label id="labelParentCat"></label><select
+                                id="parentCatSelect"></select></div>
+                        <div class="form-group"><label id="labelSubName"></label><input type="text" id="newSubName"
+                                maxlength="15"></div>
+                    </div>
+                    <button class="btn btn-primary btn-small" onclick="addSubCategory()">+</button>
+                </div>
+                <div class="cat-list" id="categoryList"></div>
+            </div>
+        </div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    ""
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2dfdb 100%);
+            color: #00695c;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #80cbc4
+        }
+
+        .stat-card h3 {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 6px
+        }
+
+        .stat-card .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00796b
+        }
+
+        .tabs,
+        .chart-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: 2px solid #80cbc4;
+            border-radius: 8px;
+            cursor: pointer;
+            background: white;
+            color: #00796b;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.3s
+        }
+
+        .tab.active {
+            background: #26a69a;
+            color: white;
+            border-color: #26a69a
+        }
+
+        .tab:hover {
+            background: #e0f2f1
+        }
+
+        .tab.active:hover {
+            background: #00897b
+        }
+
+        .charts-area {
+            min-height: 300px
+        }
+
+        .chart-container {
+            display: none;
+            padding: 20px;
+            background: #fafffe;
+            border-radius: 12px;
+            border: 1px solid #e0f2f1
+        }
+
+        .chart-container.active {
+            display: block
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px
+        }
+
+        .chart-box {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #e0f2f1
+        }
+
+        .chart-box h4 {
+            text-align: center;
+            margin-bottom: 12px;
+            color: #00796b;
+            font-size: 14px
+        }
+
+        .pie-wrap {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto
+        }
+
+        .pie-legend {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #555;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.2s
+        }
+
+        .legend-item:hover {
+            background: #e0f2f1
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px
+        }
+
+        .bar-wrap {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            gap: 8px;
+            padding: 10px 5px
+        }
+
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: 60px
+        }
+
+        .bar {
+            width: 100%;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s;
+            cursor: pointer;
+            min-height: 2px
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: scaleX(1.1)
+        }
+
+        .bar-label {
+            font-size: 9px;
+            margin-top: 4px;
+            text-align: center;
+            color: #666;
+            word-break: break-all
+        }
+
+        .bar-value {
+            font-size: 9px;
+            color: #00796b;
+            font-weight: bold
+        }
+
+        .line-wrap {
+            height: 200px;
+            position: relative
+        }
+
+        .line-canvas {
+            width: 100%;
+            height: 100%
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .filter-row select,
+        .filter-row input {
+            padding: 8px 12px;
+            border: 2px solid #b2dfdb;
+            border-radius: 6px;
+            background: #fafffe
+        }
+
+        .filter-row select:focus,
+        .filter-row input:focus {
+            outline: none;
+            border-color: #26a69a
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e0f2f1;
+            font-size: 13px
+        }
+
+        th {
+            background: #e0f7fa;
+            color: #00695c;
+            font-weight: 600
+        }
+
+        tr:hover {
+            background: #f1f8f6
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #80cbc4;
+            padding: 40px
+        }
+    </style>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center
+        }
+
+        .modal.show {
+            display: flex
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2)
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: #e0f7fa;
+            border-bottom: 1px solid #b2dfdb
+        }
+
+        .modal-header h3 {
+            color: #00796b;
+            font-size: 1.1em
+        }
+
+        .close-btn {
+            font-size: 24px;
+            cursor: pointer;
+            color: #00796b;
+            line-height: 1
+        }
+
+        .close-btn:hover {
+            color: #004d40
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(80vh - 60px)
+        }
+
+        .cat-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0f2f1
+        }
+
+        .cat-section h4 {
+            color: #00796b;
+            margin-bottom: 12px;
+            font-size: 14px
+        }
+
+        .icon-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #fafffe;
+            border: 2px solid #b2dfdb;
+            border-radius: 8px
+        }
+
+        .icon-opt {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: all 0.2s
+        }
+
+        .icon-opt:hover {
+            background: #e0f2f1
+        }
+
+        .icon-opt.selected {
+            background: #26a69a;
+            color: white
+        }
+
+        .cat-list {
+            max-height: 250px;
+            overflow-y: auto
+        }
+
+        .cat-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s
+        }
+
+        .cat-item:hover {
+            background: #f8fffe
+        }
+
+        .cat-info {
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .cat-icon {
+            font-size: 18px
+        }
+
+        .cat-name {
+            font-weight: 500;
+            color: #333
+        }
+
+        .sub-list {
+            margin-left: 30px;
+            font-size: 13px;
+            color: #666
+        }
+
+        .sub-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: 2px 4px;
+            padding: 2px 8px;
+            background: #e8f5e9;
+            border-radius: 4px
+        }
+
+        .del-btn {
+            cursor: pointer;
+            color: #ef5350;
+            font-size: 12px;
+            margin-left: 4px
+        }
+
+        .del-btn:hover {
+            color: #c62828
+        }
+
+        .tooltip {
+            position: fixed;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 2000;
+            max-width: 200px
+        }
+
+        .tooltip.show {
+            opacity: 1
+        }
+    </style>
+    <script>
+        var ICONS = [
+            "\uD83C\uDF5C", "\uD83C\uDF54", "\uD83C\uDF55", "\uD83C\uDF5D", "\uD83C\uDF5B", "\uD83C\uDF5A", "\uD83C\uDF59", "\uD83C\uDF63", "\uD83C\uDF70", "\uD83C\uDF66",
+            "\u2615", "\uD83C\uDF7A", "\uD83C\uDF77", "\uD83E\uDD64", "\uD83C\uDF75", "\uD83E\uDD57", "\uD83C\uDF5E", "\uD83E\uDD5A", "\uD83C\uDF56", "\uD83C\uDF57",
+            "\uD83D\uDE97", "\uD83D\uDE95", "\uD83D\uDE8C", "\uD83D\uDE87", "\uD83D\uDE84", "\u2708\uFE0F", "\uD83D\uDEB2", "\uD83D\uDEF5", "\uD83D\uDE96", "\u26FD",
+            "\uD83D\uDED2", "\uD83D\uDECD\uFE0F", "\uD83C\uDFEC", "\uD83D\uDCE6", "\uD83D\uDC5C", "\uD83D\uDC57", "\uD83D\uDC56", "\uD83D\uDC5F", "\uD83D\uDC54", "\uD83E\uDDE5",
+            "\uD83C\uDFAE", "\uD83C\uDFAC", "\uD83C\uDFB5", "\uD83C\uDFB8", "\uD83C\uDFC0", "\u26BD", "\uD83C\uDFBE", "\uD83C\uDFB3", "\uD83C\uDFAD", "\uD83C\uDFA8",
+            "\uD83C\uDFE0", "\uD83C\uDFE2", "\uD83D\uDECB\uFE0F", "\uD83D\uDEBF", "\uD83D\uDCA1", "\uD83D\uDD27", "\uD83E\uDDF9", "\uD83E\uDDFA", "\uD83C\uDF21\uFE0F", "\uD83D\uDEAA",
+            "\uD83D\uDC8A", "\uD83E\uDE7A", "\uD83C\uDFE5", "\uD83E\uDDEC", "\uD83E\uDE78", "\uD83D\uDC89", "\uD83E\uDDB7", "\uD83D\uDC53", "\u2764\uFE0F", "\uD83E\uDDD1\u200D\u2695\uFE0F",
+            "\uD83D\uDCDA", "\uD83D\uDCD6", "\u270F\uFE0F", "\uD83D\uDCDD", "\uD83C\uDF93", "\uD83D\uDCBB", "\uD83D\uDDA5\uFE0F", "\uD83D\uDCF1", "\uD83C\uDFEB", "\uD83E\uDDEE",
+            "\uD83D\uDCB0", "\uD83D\uDCB3", "\uD83D\uDCB8", "\uD83E\uDE99", "\uD83C\uDFE6", "\uD83D\uDCC8", "\uD83D\uDCC9", "\uD83D\uDCCA", "\uD83D\uDCB5", "\uD83D\uDCB4",
+            "\uD83C\uDF81", "\uD83C\uDF82", "\uD83C\uDF89", "\uD83C\uDF8A", "\uD83D\uDC8D", "\uD83D\uDC90", "\uD83C\uDF39", "\uD83C\uDF3B", "\uD83C\uDF3A", "\uD83C\uDF38"
+        ];
+        var T = {
+            title: "\uD83C\uDF3F \u4E2A\u4EBA\u8BB0\u8D26\u672C",
+            addTitle: "\u6DFB\u52A0\u6D88\u8D39\u8BB0\u5F55",
+            labelCat: "\u6D88\u8D39\u7C7B\u578B",
+            labelSubCat: "\u5B50\u7C7B\u578B",
+            labelAmt: "\u91D1\u989D(\u5143)",
+            labelDate: "\u65E5\u671F",
+            labelNote: "\u5907\u6CE8",
+            btnAdd: "\u6DFB\u52A0\u8BB0\u5F55",
+            btnManageCat: "\u7BA1\u7406\u7C7B\u578B",
+            statsTitle: "\u6D88\u8D39\u7EDF\u8BA1",
+            tabDay: "\u65E5\u7EDF\u8BA1",
+            tabMonth: "\u6708\u7EDF\u8BA1",
+            tabYear: "\u5E74\u7EDF\u8BA1",
+            tabAll: "\u5168\u90E8",
+            statLabel1: "\u603B\u652F\u51FA",
+            statLabel2: "\u8BB0\u5F55\u6570",
+            statLabel3: "\u5E73\u5747\u6BCF\u7B14",
+            statLabel4: "\u6700\u5927\u5355\u7B14",
+            chartPie: "\u997C\u56FE",
+            chartBar: "\u67F1\u72B6\u56FE",
+            chartLine: "\u8D8B\u52BF\u56FE",
+            chartRing: "\u73AF\u5F62\u56FE",
+            pieTitle: "\u6D88\u8D39\u7C7B\u578B\u5206\u5E03",
+            barTitle: "\u5404\u7C7B\u6D88\u8D39\u91D1\u989D",
+            lineTitle: "\u6D88\u8D39\u8D8B\u52BF",
+            ringTitle: "\u6D88\u8D39\u5360\u6BD4",
+            recordsTitle: "\u6D88\u8D39\u8BB0\u5F55",
+            btnExport: "\u5BFC\u51FAEXCEL",
+            btnImport: "\u5BFC\u5165\u6570\u636E",
+            allTypes: "\u5168\u90E8\u7C7B\u578B",
+            noRecord: "\u6682\u65E0\u8BB0\u5F55",
+            delete: "\u5220\u9664",
+            confirmDel: "\u786E\u5B9A\u5220\u9664\u5417\uFF1F",
+            importOk: "\u5BFC\u5165\u6210\u529F\uFF01",
+            importFail: "\u5BFC\u5165\u5931\u8D25",
+            invalidAmt: "\u8BF7\u8F93\u5165\u6709\u6548\u91D1\u989D",
+            selectDate: "\u8BF7\u9009\u62E9\u65E5\u671F",
+            thDate: "\u65E5\u671F",
+            thType: "\u7C7B\u578B",
+            thAmount: "\u91D1\u989D",
+            thNote: "\u5907\u6CE8",
+            thAction: "\u64CD\u4F5C",
+            modalTitle: "\u7BA1\u7406\u6D88\u8D39\u7C7B\u578B",
+            addCatTitle: "\u6DFB\u52A0\u4E3B\u7C7B\u578B",
+            addSubTitle: "\u6DFB\u52A0\u5B50\u7C7B\u578B",
+            labelNewCat: "\u7C7B\u578B\u540D\u79F0",
+            labelIcon: "\u9009\u62E9\u56FE\u6807",
+            labelParentCat: "\u7236\u7C7B\u578B",
+            labelSubName: "\u5B50\u7C7B\u578B\u540D\u79F0",
+            catListTitle: "\u5DF2\u6709\u7C7B\u578B"
+        };
+        var defaultCats = [
+            { id: 1, name: "\u9910\u996E", icon: "\uD83C\uDF5C", subs: [{ id: 101, name: "\u65E9\u9910" }, { id: 102, name: "\u5348\u9910" }, { id: 103, name: "\u665A\u9910" }, { id: 104, name: "\u5916\u5356" }] },
+            { id: 2, name: "\u4EA4\u901A", icon: "\uD83D\uDE97", subs: [{ id: 201, name: "\u5730\u94C1" }, { id: 202, name: "\u516C\u4EA4" }, { id: 203, name: "\u6253\u8F66" }, { id: 204, name: "\u52A0\u6CB9" }] },
+            { id: 3, name: "\u8D2D\u7269", icon: "\uD83D\uDED2", subs: [{ id: 301, name: "\u6DD8\u5B9D" }, { id: 302, name: "\u4EAC\u4E1C" }, { id: 303, name: "\u8D85\u5E02" }, { id: 304, name: "\u5546\u573A" }] },
+            { id: 4, name: "\u5A31\u4E50", icon: "\uD83C\uDFAE", subs: [{ id: 401, name: "\u7535\u5F71" }, { id: 402, name: "\u6E38\u620F" }, { id: 403, name: "\u65C5\u6E38" }] },
+            { id: 5, name: "\u5C45\u4F4F", icon: "\uD83C\uDFE0", subs: [{ id: 501, name: "\u623F\u79DF" }, { id: 502, name: "\u6C34\u7535" }, { id: 503, name: "\u7269\u4E1A" }] },
+            { id: 6, name: "\u533B\u7597", icon: "\uD83D\uDC8A", subs: [{ id: 601, name: "\u770B\u75C5" }, { id: 602, name: "\u4E70\u836F" }] },
+            { id: 7, name: "\u6559\u80B2", icon: "\uD83D\uDCDA", subs: [{ id: 701, name: "\u4E66\u7C4D" }, { id: 702, name: "\u8BFE\u7A0B" }] },
+            { id: 8, name: "\u5176\u4ED6", icon: "\uD83D\uDCE6", subs: [] }
+        ];
+        var COLORS = ['#4dd0e1', '#81c784', '#ffb74d', '#f06292', '#ba68c8', '#7986cb', '#4db6ac', '#aed581', '#ff8a65', '#90a4ae'];
+        var categories = JSON.parse(localStorage.getItem('categories') || 'null') || defaultCats;
+        var records = JSON.parse(localStorage.getItem('records') || '[]');
+        var currentPeriod = 'month';
+        var currentChart = 'pie';
+        var selectedIcon = ICONS[0];
+        function saveData() {
+            localStorage.setItem('categories', JSON.stringify(categories));
+            localStorage.setItem('records', JSON.stringify(records));
+        }
+        function initUI() {
+            document.getElementById('title').textContent = T.title;
+            document.getElementById('addTitle').textContent = T.addTitle;
+            document.getElementById('labelCat').textContent = T.labelCat;
+            document.getElementById('labelSubCat').textContent = T.labelSubCat;
+            document.getElementById('labelAmt').textContent = T.labelAmt;
+            document.getElementById('labelDate').textContent = T.labelDate;
+            document.getElementById('labelNote').textContent = T.labelNote;
+            document.getElementById('btnAdd').textContent = T.btnAdd;
+            document.getElementById('btnManageCat').textContent = T.btnManageCat;
+            document.getElementById('statsTitle').textContent = T.statsTitle;
+            document.getElementById('statLabel1').textContent = T.statLabel1;
+            document.getElementById('statLabel2').textContent = T.statLabel2;
+            document.getElementById('statLabel3').textContent = T.statLabel3;
+            document.getElementById('statLabel4').textContent = T.statLabel4;
+            document.getElementById('recordsTitle').textContent = T.recordsTitle;
+            document.getElementById('btnExport').textContent = T.btnExport;
+            document.getElementById('btnImport').textContent = T.btnImport;
+            document.getElementById('modalTitle').textContent = T.modalTitle;
+            document.getElementById('addCatTitle').textContent = T.addCatTitle;
+            document.getElementById('addSubTitle').textContent = T.addSubTitle;
+            document.getElementById('labelNewCat').textContent = T.labelNewCat;
+            document.getElementById('labelIcon').textContent = T.labelIcon;
+            document.getElementById('labelParentCat').textContent = T.labelParentCat;
+            document.getElementById('labelSubName').textContent = T.labelSubName;
+            document.getElementById('date').valueAsDate = new Date();
+            var periodTabs = document.getElementById('periodTabs');
+            periodTabs.innerHTML = '<div class="tab" onclick="switchPeriod(\'day\',this)">' + T.tabDay + '</div><div class="tab active" onclick="switchPeriod(\'month\',this)">' + T.tabMonth + '</div><div class="tab" onclick="switchPeriod(\'year\',this)">' + T.tabYear + '</div><div class="tab" onclick="switchPeriod(\'all\',this)">' + T.tabAll + '</div>';
+            var chartTabs = document.getElementById('chartTabs');
+            chartTabs.innerHTML = '<div class="tab active" onclick="switchChart(\'pie\',this)">' + T.chartPie + '</div><div class="tab" onclick="switchChart(\'bar\',this)">' + T.chartBar + '</div><div class="tab" onclick="switchChart(\'line\',this)">' + T.chartLine + '</div><div class="tab" onclick="switchChart(\'ring\',this)">' + T.chartRing + '</div>';
+            initIconSelector();
+            updateCategorySelects();
+            updateAll();
+        }
+        function initIconSelector() {
+            var sel = document.getElementById('iconSelector');
+            var html = '';
+            for (var i = 0; i < ICONS.length; i++) {
+                html += '<div class="icon-opt' + (i === 0 ? ' selected' : '') + '" onclick="selectIcon(this,' + i + ')">' + ICONS[i] + '</div>';
+            }
+            sel.innerHTML = html;
+        }
+        function selectIcon(el, idx) {
+            var opts = document.querySelectorAll('.icon-opt');
+            for (var i = 0; i < opts.length; i++)opts[i].classList.remove('selected');
+            el.classList.add('selected');
+            selectedIcon = ICONS[idx];
+        }
+        function updateCategorySelects() {
+            var catSel = document.getElementById('category');
+            var filterSel = document.getElementById('filterCategory');
+            var parentSel = document.getElementById('parentCatSelect');
+            catSel.innerHTML = '';
+            filterSel.innerHTML = '<option value="">' + T.allTypes + '</option>';
+            parentSel.innerHTML = '';
+            for (var i = 0; i < categories.length; i++) {
+                var c = categories[i];
+                catSel.innerHTML += '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>';
+                filterSel.innerHTML += '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>';
+                parentSel.innerHTML += '<option value="' + c.id + '">' + c.icon + ' ' + c.name + '</option>';
+            }
+            onCategoryChange();
+        }
+        function onCategoryChange() {
+            var catId = parseInt(document.getElementById('category').value);
+            var subSel = document.getElementById('subCategory');
+            subSel.innerHTML = '<option value="">--</option>';
+            var cat = categories.find(function (c) { return c.id === catId });
+            if (cat && cat.subs) {
+                for (var i = 0; i < cat.subs.length; i++) {
+                    subSel.innerHTML += '<option value="' + cat.subs[i].id + '">' + cat.subs[i].name + '</option>';
+                }
+            }
+        }
+        function addRecord() {
+            var catId = parseInt(document.getElementById('category').value);
+            var subId = document.getElementById('subCategory').value;
+            var amt = parseFloat(document.getElementById('amount').value);
+            var dt = document.getElementById('date').value;
+            var nt = document.getElementById('note').value;
+            if (!amt || amt <= 0) { alert(T.invalidAmt); return }
+            if (!dt) { alert(T.selectDate); return }
+            var cat = categories.find(function (c) { return c.id === catId });
+            var sub = subId ? cat.subs.find(function (s) { return s.id === parseInt(subId) }) : null;
+            records.push({
+                id: Date.now(),
+                categoryId: catId,
+                categoryName: cat.name,
+                categoryIcon: cat.icon,
+                subId: sub ? sub.id : null,
+                subName: sub ? sub.name : '',
+                amount: amt,
+                date: dt,
+                note: nt
+            });
+            saveData();
+            document.getElementById('amount').value = '';
+            document.getElementById('note').value = '';
+            updateAll();
+        }
+        function deleteRecord(id) {
+            if (confirm(T.confirmDel)) {
+                records = records.filter(function (r) { return r.id !== id });
+                saveData();
+                updateAll();
+            }
+        }
+        function switchPeriod(p, el) {
+            currentPeriod = p;
+            var tabs = document.querySelectorAll('#periodTabs .tab');
+            for (var i = 0; i < tabs.length; i++)tabs[i].classList.remove('active');
+            el.classList.add('active');
+            updateStats();
+        }
+        function switchChart(c, el) {
+            currentChart = c;
+            var tabs = document.querySelectorAll('#chartTabs .tab');
+            for (var i = 0; i < tabs.length; i++)tabs[i].classList.remove('active');
+            el.classList.add('active');
+            renderCharts();
+        }
+        function getFilteredByPeriod() {
+            var now = new Date();
+            var today = now.toISOString().split('T')[0];
+            var month = today.substring(0, 7);
+            var year = today.substring(0, 4);
+            return records.filter(function (r) {
+                if (currentPeriod === 'day') return r.date === today;
+                if (currentPeriod === 'month') return r.date.substring(0, 7) === month;
+                if (currentPeriod === 'year') return r.date.substring(0, 4) === year;
+                return true;
+            });
+        }
+        function updateStats() {
+            var filtered = getFilteredByPeriod();
+            var total = 0, max = 0;
+            for (var i = 0; i < filtered.length; i++) {
+                total += filtered[i].amount;
+                if (filtered[i].amount > max) max = filtered[i].amount;
+            }
+            var count = filtered.length;
+            document.getElementById('totalAmount').textContent = '\u00A5' + total.toFixed(2);
+            document.getElementById('totalCount').textContent = count;
+            document.getElementById('avgAmount').textContent = '\u00A5' + (count ? (total / count).toFixed(2) : '0.00');
+            document.getElementById('maxAmount').textContent = '\u00A5' + max.toFixed(2);
+            renderCharts();
+        }
+        function renderCharts() {
+            var filtered = getFilteredByPeriod();
+            var catData = {};
+            for (var i = 0; i < filtered.length; i++) {
+                var key = filtered[i].categoryName;
+                if (!catData[key]) catData[key] = { amount: 0, icon: filtered[i].categoryIcon, records: [] };
+                catData[key].amount += filtered[i].amount;
+                catData[key].records.push(filtered[i]);
+            }
+            var labels = Object.keys(catData);
+            var values = [], icons = [];
+            for (var i = 0; i < labels.length; i++) {
+                values.push(catData[labels[i]].amount);
+                icons.push(catData[labels[i]].icon);
+            }
+            var area = document.getElementById('chartsArea');
+            if (currentChart === 'pie') {
+                area.innerHTML = '<div class="chart-container active"><div class="chart-grid"><div class="chart-box"><h4>' + T.pieTitle + '</h4><div class="pie-wrap"><canvas id="pieCanvas" width="220" height="220"></canvas></div><div class="pie-legend" id="pieLegend"></div></div></div></div>';
+                drawPie('pieCanvas', 'pieLegend', labels, values, icons, catData);
+            } else if (currentChart === 'bar') {
+                area.innerHTML = '<div class="chart-container active"><div class="chart-box"><h4>' + T.barTitle + '</h4><div class="bar-wrap" id="barWrap"></div></div></div>';
+                drawBar(labels, values, icons);
+            } else if (currentChart === 'line') {
+                area.innerHTML = '<div class="chart-container active"><div class="chart-box"><h4>' + T.lineTitle + '</h4><div class="line-wrap"><canvas id="lineCanvas" class="line-canvas"></canvas></div></div></div>';
+                drawLine(filtered);
+            } else if (currentChart === 'ring') {
+                area.innerHTML = '<div class="chart-container active"><div class="chart-grid"><div class="chart-box"><h4>' + T.ringTitle + '</h4><div class="pie-wrap"><canvas id="ringCanvas" width="220" height="220"></canvas></div><div class="pie-legend" id="ringLegend"></div></div></div></div>';
+                drawRing('ringCanvas', 'ringLegend', labels, values, icons, catData);
+            }
+        }
+        function drawPie(canvasId, legendId, labels, values, icons, catData) {
+            var canvas = document.getElementById(canvasId);
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 220, 220);
+            var total = 0;
+            for (var i = 0; i < values.length; i++)total += values[i];
+            if (total === 0) {
+                ctx.fillStyle = '#e0e0e0';
+                ctx.beginPath(); ctx.arc(110, 110, 90, 0, Math.PI * 2); ctx.fill();
+                document.getElementById(legendId).innerHTML = '';
+                return;
+            }
+            var slices = [];
+            var start = -Math.PI / 2;
+            for (var i = 0; i < values.length; i++) {
+                var slice = values[i] / total * Math.PI * 2;
+                ctx.fillStyle = COLORS[i % COLORS.length];
+                ctx.beginPath();
+                ctx.moveTo(110, 110);
+                ctx.arc(110, 110, 90, start, start + slice);
+                ctx.closePath();
+                ctx.fill();
+                slices.push({ start: start, end: start + slice, label: labels[i], value: values[i], color: COLORS[i % COLORS.length] });
+                start += slice;
+            }
+            canvas.slices = slices;
+            canvas.total = total;
+            canvas.catData = catData;
+            canvas.onmousemove = function (e) {
+                var rect = canvas.getBoundingClientRect();
+                var x = e.clientX - rect.left - 110;
+                var y = e.clientY - rect.top - 110;
+                var angle = Math.atan2(y, x);
+                if (angle < -Math.PI / 2) angle += Math.PI * 2;
+                var dist = Math.sqrt(x * x + y * y);
+                if (dist <= 90) {
+                    for (var i = 0; i < slices.length; i++) {
+                        var s = slices[i];
+                        if (angle >= s.start && angle < s.end) {
+                            var pct = (s.value / total * 100).toFixed(1);
+                            var recs = catData[s.label].records;
+                            var detail = s.label + ': \u00A5' + s.value.toFixed(2) + ' (' + pct + '%)\n';
+                            detail += '\u5171' + recs.length + '\u7B14\u8BB0\u5F55';
+                            showTooltip(e.clientX, e.clientY, detail);
+                            return;
+                        }
+                    }
+                }
+                hideTooltip();
+            };
+            canvas.onmouseleave = hideTooltip;
+            var legend = '';
+            for (var i = 0; i < labels.length; i++) {
+                var pct = (values[i] / total * 100).toFixed(1);
+                legend += '<div class="legend-item"><div class="legend-color" style="background:' + COLORS[i % COLORS.length] + '"></div>' + icons[i] + labels[i] + ' ' + pct + '%</div>';
+            }
+            document.getElementById(legendId).innerHTML = legend;
+        }
+        function drawRing(canvasId, legendId, labels, values, icons, catData) {
+            var canvas = document.getElementById(canvasId);
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 220, 220);
+            var total = 0;
+            for (var i = 0; i < values.length; i++)total += values[i];
+            if (total === 0) {
+                ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 30;
+                ctx.beginPath(); ctx.arc(110, 110, 75, 0, Math.PI * 2); ctx.stroke();
+                document.getElementById(legendId).innerHTML = '';
+                return;
+            }
+            var slices = [];
+            var start = -Math.PI / 2;
+            ctx.lineWidth = 30;
+            for (var i = 0; i < values.length; i++) {
+                var slice = values[i] / total * Math.PI * 2;
+                ctx.strokeStyle = COLORS[i % COLORS.length];
+                ctx.beginPath();
+                ctx.arc(110, 110, 75, start, start + slice);
+                ctx.stroke();
+                slices.push({ start: start, end: start + slice, label: labels[i], value: values[i] });
+                start += slice;
+            }
+            ctx.fillStyle = '#00796b'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('\u00A5' + total.toFixed(0), 110, 105);
+            ctx.fillStyle = '#666'; ctx.font = '12px sans-serif';
+            ctx.fillText('\u603B\u8BA1', 110, 125);
+            canvas.slices = slices; canvas.total = total; canvas.catData = catData;
+            canvas.onmousemove = function (e) {
+                var rect = canvas.getBoundingClientRect();
+                var x = e.clientX - rect.left - 110, y = e.clientY - rect.top - 110;
+                var angle = Math.atan2(y, x);
+                if (angle < -Math.PI / 2) angle += Math.PI * 2;
+                var dist = Math.sqrt(x * x + y * y);
+                if (dist >= 60 && dist <= 90) {
+                    for (var i = 0; i < slices.length; i++) {
+                        var s = slices[i];
+                        if (angle >= s.start && angle < s.end) {
+                            var pct = (s.value / total * 100).toFixed(1);
+                            showTooltip(e.clientX, e.clientY, s.label + ': \u00A5' + s.value.toFixed(2) + ' (' + pct + '%)');
+                            return;
+                        }
+                    }
+                }
+                hideTooltip();
+            };
+            canvas.onmouseleave = hideTooltip;
+            var legend = '';
+            for (var i = 0; i < labels.length; i++) {
+                legend += '<div class="legend-item"><div class="legend-color" style="background:' + COLORS[i % COLORS.length] + '"></div>' + icons[i] + labels[i] + '</div>';
+            }
+            document.getElementById(legendId).innerHTML = legend;
+        }
+        function drawBar(labels, values, icons) {
+            var wrap = document.getElementById('barWrap');
+            if (values.length === 0) { wrap.innerHTML = ''; return }
+            var max = Math.max.apply(null, values);
+            var html = '';
+            for (var i = 0; i < labels.length; i++) {
+                var h = max > 0 ? (values[i] / max * 160) : 0;
+                html += '<div class="bar-item"><div class="bar-value">\u00A5' + values[i].toFixed(0) + '</div><div class="bar" style="height:' + h + 'px;background:' + COLORS[i % COLORS.length] + '" data-label="' + labels[i] + '" data-value="' + values[i].toFixed(2) + '" onmousemove="showBarTip(event,this)" onmouseleave="hideTooltip()"></div><div class="bar-label">' + icons[i] + '<br>' + labels[i] + '</div></div>';
+            }
+            wrap.innerHTML = html;
+        }
+        function showBarTip(e, el) {
+            showTooltip(e.clientX, e.clientY, el.dataset.label + ': \u00A5' + el.dataset.value);
+        }
+        function drawLine(data) {
+            var canvas = document.getElementById('lineCanvas');
+            var rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width; canvas.height = 200;
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (data.length === 0) return;
+            var dateMap = {};
+            for (var i = 0; i < data.length; i++) {
+                var d = data[i].date;
+                dateMap[d] = (dateMap[d] || 0) + data[i].amount;
+            }
+            var dates = Object.keys(dateMap).sort();
+            var vals = [];
+            for (var i = 0; i < dates.length; i++)vals.push(dateMap[dates[i]]);
+            if (dates.length === 0) return;
+            var max = Math.max.apply(null, vals);
+            var padL = 50, padR = 20, padT = 20, padB = 40;
+            var w = canvas.width - padL - padR;
+            var h = canvas.height - padT - padB;
+            ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
+            for (var i = 0; i <= 4; i++) {
+                var y = padT + h - h * i / 4;
+                ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(canvas.width - padR, y); ctx.stroke();
+                ctx.fillStyle = '#999'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+                ctx.fillText('\u00A5' + (max * i / 4).toFixed(0), padL - 5, y + 3);
+            }
+            var points = [];
+            for (var i = 0; i < dates.length; i++) {
+                var x = padL + (dates.length > 1 ? w * i / (dates.length - 1) : w / 2);
+                var y = padT + h - (max > 0 ? vals[i] / max * h : 0);
+                points.push({ x: x, y: y, date: dates[i], val: vals[i] });
+            }
+            ctx.strokeStyle = '#26a69a'; ctx.lineWidth = 2; ctx.beginPath();
+            for (var i = 0; i < points.length; i++) {
+                if (i === 0) ctx.moveTo(points[i].x, points[i].y);
+                else ctx.lineTo(points[i].x, points[i].y);
+            }
+            ctx.stroke();
+            ctx.fillStyle = '#26a69a';
+            for (var i = 0; i < points.length; i++) {
+                ctx.beginPath(); ctx.arc(points[i].x, points[i].y, 4, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+            var step = Math.ceil(dates.length / 8);
+            for (var i = 0; i < dates.length; i += step) {
+                ctx.fillText(dates[i].substring(5), points[i].x, canvas.height - padB + 15);
+            }
+            canvas.points = points;
+            canvas.onmousemove = function (e) {
+                var rect = canvas.getBoundingClientRect();
+                var mx = e.clientX - rect.left;
+                for (var i = 0; i < points.length; i++) {
+                    if (Math.abs(mx - points[i].x) < 15) {
+                        showTooltip(e.clientX, e.clientY, points[i].date + '\n\u00A5' + points[i].val.toFixed(2));
+                        return;
+                    }
+                }
+                hideTooltip();
+            };
+            canvas.onmouseleave = hideTooltip;
+        }
+        function showTooltip(x, y, text) {
+            var tip = document.getElementById('tooltip');
+            tip.textContent = text;
+            tip.style.left = (x + 10) + 'px';
+            tip.style.top = (y + 10) + 'px';
+            tip.classList.add('show');
+        }
+        function hideTooltip() {
+            document.getElementById('tooltip').classList.remove('show');
+        }
+        function renderRecords() {
+            var filterCat = document.getElementById('filterCategory').value;
+            var filterMonth = document.getElementById('filterMonth').value;
+            var filtered = records.filter(function (r) {
+                if (filterCat && r.categoryId !== parseInt(filterCat)) return false;
+                if (filterMonth && r.date.substring(0, 7) !== filterMonth) return false;
+                return true;
+            }).sort(function (a, b) { return new Date(b.date) - new Date(a.date) });
+            if (filtered.length === 0) {
+                document.getElementById('recordsTable').innerHTML = '<div class="empty-msg">' + T.noRecord + '</div>';
+                return;
+            }
+            var html = '<table><thead><tr><th>' + T.thDate + '</th><th>' + T.thType + '</th><th>' + T.thAmount + '</th><th>' + T.thNote + '</th><th>' + T.thAction + '</th></tr></thead><tbody>';
+            for (var i = 0; i < filtered.length; i++) {
+                var r = filtered[i];
+                var typeName = r.categoryIcon + ' ' + r.categoryName + (r.subName ? ' / ' + r.subName : '');
+                html += '<tr><td>' + r.date + '</td><td>' + typeName + '</td><td>\u00A5' + r.amount.toFixed(2) + '</td><td>' + (r.note || '-') + '</td><td><button class="btn btn-danger" onclick="deleteRecord(' + r.id + ')">' + T.delete + '</button></td></tr>';
+            }
+            html += '</tbody></table>';
+            document.getElementById('recordsTable').innerHTML = html;
+        }
+        function exportExcel() {
+            if (records.length === 0) { alert(T.noRecord); return }
+            var csv = '\uFEFF' + T.thDate + ',' + T.thType + ',\u5B50\u7C7B\u578B,' + T.thAmount + ',' + T.thNote + '\n';
+            for (var i = 0; i < records.length; i++) {
+                var r = records[i];
+                csv += r.date + ',' + r.categoryName + ',' + (r.subName || '') + ',' + r.amount.toFixed(2) + ',' + (r.note || '') + '\n';
+            }
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = '\u8BB0\u8D26\u6570\u636E_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+        }
+        function importData(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    var imported = JSON.parse(e.target.result);
+                    if (imported.records) records = records.concat(imported.records);
+                    else if (Array.isArray(imported)) records = records.concat(imported);
+                    if (imported.categories) categories = imported.categories;
+                    saveData();
+                    updateCategorySelects();
+                    updateAll();
+                    alert(T.importOk);
+                } catch (err) { alert(T.importFail) }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+        function showCategoryModal() {
+            document.getElementById('categoryModal').classList.add('show');
+            renderCategoryList();
+        }
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('show');
+        }
+        function addCategory() {
+            var name = document.getElementById('newCatName').value.trim();
+            if (!name) { alert('\u8BF7\u8F93\u5165\u7C7B\u578B\u540D\u79F0'); return }
+            var exists = categories.find(function (c) { return c.name === name });
+            if (exists) { alert('\u7C7B\u578B\u5DF2\u5B58\u5728'); return }
+            var newId = Date.now();
+            categories.push({ id: newId, name: name, icon: selectedIcon, subs: [] });
+            saveData();
+            document.getElementById('newCatName').value = '';
+            updateCategorySelects();
+            renderCategoryList();
+        }
+        function addSubCategory() {
+            var parentId = parseInt(document.getElementById('parentCatSelect').value);
+            var name = document.getElementById('newSubName').value.trim();
+            if (!name) { alert('\u8BF7\u8F93\u5165\u5B50\u7C7B\u578B\u540D\u79F0'); return }
+            var cat = categories.find(function (c) { return c.id === parentId });
+            if (!cat) return;
+            var exists = cat.subs.find(function (s) { return s.name === name });
+            if (exists) { alert('\u5B50\u7C7B\u578B\u5DF2\u5B58\u5728'); return }
+            cat.subs.push({ id: Date.now(), name: name });
+            saveData();
+            document.getElementById('newSubName').value = '';
+            updateCategorySelects();
+            renderCategoryList();
+        }
+        function deleteCategory(id) {
+            if (!confirm('\u786E\u5B9A\u5220\u9664\u6B64\u7C7B\u578B\uFF1F')) return;
+            categories = categories.filter(function (c) { return c.id !== id });
+            saveData();
+            updateCategorySelects();
+            renderCategoryList();
+        }
+        function deleteSubCategory(catId, subId) {
+            var cat = categories.find(function (c) { return c.id === catId });
+            if (!cat) return;
+            cat.subs = cat.subs.filter(function (s) { return s.id !== subId });
+            saveData();
+            updateCategorySelects();
+            renderCategoryList();
+        }
+        function renderCategoryList() {
+            var html = '';
+            for (var i = 0; i < categories.length; i++) {
+                var c = categories[i];
+                html += '<div class="cat-item"><div class="cat-info"><span class="cat-icon">' + c.icon + '</span><span class="cat-name">' + c.name + '</span></div><span class="del-btn" onclick="deleteCategory(' + c.id + ')">\u5220\u9664</span></div>';
+                if (c.subs && c.subs.length > 0) {
+                    html += '<div class="sub-list">';
+                    for (var j = 0; j < c.subs.length; j++) {
+                        html += '<span class="sub-item">' + c.subs[j].name + '<span class="del-btn" onclick="deleteSubCategory(' + c.id + ',' + c.subs[j].id + ')">\u00D7</span></span>';
+                    }
+                    html += '</div>';
+                }
+            }
+            document.getElementById('categoryList').innerHTML = html;
+        }
+        function updateAll() { updateStats(); renderRecords() }
+        initUI();
+    </script>
+</body>
+
+</html>
